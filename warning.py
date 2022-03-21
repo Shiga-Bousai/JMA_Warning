@@ -1,5 +1,4 @@
 import requests
-
 from os.path import dirname, abspath, join
 dirName = dirname(abspath(__file__))
 
@@ -184,7 +183,7 @@ def mkImage(cityWarningData):
     for cWD in cityWarningData:
         if cityWarningData[cWD] != []:
             if warnCityCount == 10:
-                BaseBG.save(f'{dirName}/WarningPost1.png', quality=95)
+                BaseBG.save(f'{dirName}/WarningPost1.png')
                 draw.rectangle(((630, 0, 1920, 1080)), fill="#313131") #すでに描画されてるものを隠す
                 textH = 100
             addCityTxt(cityCode[cWD],textH)
@@ -192,8 +191,8 @@ def mkImage(cityWarningData):
             textH += 95
 
     if warnCityCount <= 9:
-        BaseBG.save(f'{dirName}/WarningPost1.png', quality=95)
+        BaseBG.save(f'{dirName}/WarningPost1.png')
         return [f'{dirName}/WarningPost1.png']
     else:
-        BaseBG.save(f'{dirName}/WarningPost2.png', quality=95)
+        BaseBG.save(f'{dirName}/WarningPost2.png')
         return [f'{dirName}/WarningPost1.png',f'{dirName}/WarningPost2.png']
