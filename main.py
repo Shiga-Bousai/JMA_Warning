@@ -50,21 +50,22 @@ if cityWarningData[1]['cityCount'] > 0:
         tweetText += '全域に'
     else:
         tweetText += '一部地域に'
+    alarts = []
     if wLevels[0]:
-        tweetText += ' #特別警報 や'
+        alarts.append(' #特別警報 ')
     if wLevels[1]:
-        tweetText += ' #警報 、'
+        alarts.append(' #警報 ')
     if wLevels[2]:
-        tweetText += ' #注意報 '
-    tweetText += 'が発令されています。\n'
+        alarts.append(' #注意報 ')
+    tweetText += '、'.join(alarts) + 'が発令されています。\n'
     if wLevels[0]:
         tweetText += '大切な命を守るため、身の安全を確保してください。\n'
     tweetText += '#滋賀県気象情報\n'
     tweetText += f'(気象庁更新時刻 {jmalastUpdate.day}日{jmalastUpdate.hour}時{jmalastUpdate.minute}分)'
-    #tweet(tweetText,mediaIDs=ids)
+    tweet(tweetText,mediaIDs=ids)
 elif cityWarningData[1]["endWarning"] and  jmalastUpdate > now + timedelta(minutes=-1):
     tweetText = f'{now.day}日{now.hour}時{now.minute}分現在 #滋賀県 内に発令されていた #注意報 #警報 は解除されました。 #滋賀県気象情報\n(気象庁更新時刻 {jmalastUpdate.day}日{jmalastUpdate.hour}時{jmalastUpdate.minute}分)'
-    #tweet(tweetText)
+    tweet(tweetText)
 
 from os import remove
 from os.path import dirname, abspath
