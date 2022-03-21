@@ -1,4 +1,11 @@
 from warning import getWarning, mkMap, mkImage
+import sys
+from os import remove
+from os.path import dirname, abspath
+from datetime import datetime, timezone, timedelta
+
+sys.path.append(abspath("../"))
+from pkg.twitter_python import tweet,uploadImage
 
 cityWarningData = getWarning()
 """
@@ -27,24 +34,27 @@ cityWarningData = [{
 },{'update': '2022-03-13T15:57:00+09:00', 'cityCount': 20}]
 """
 
-import sys
-import os
-sys.path.append(os.path.abspath("../"))
-from pkg.twitter_python import tweet,uploadImage
-
-from datetime import datetime, timezone, timedelta
-
+dirName = dirname(abspath(__file__))
+#時刻周りの生成
+#now : 現在時刻
+#jmaUpdate : 気象庁XMLアップデート
+#jmaLastUpdate : 前回のアップデート
 now = datetime.now(timezone(timedelta(hours=9)))
-jmalastUpdate = datetime.strptime(cityWarningData[1]['update'], '%Y-%m-%dT%H:%M:%S%z')
+jmaUpdate = datetime.strptime(cityWarningData[1]['update'], '%Y-%m-%dT%H:%M:%S%z')
+with open(f'{dirName}/tmp.txt') as f:
+    jmaLastUpdate = f.read()
+    jmaLastUpdate = datetime.strptime(jmaUpdate, '%Y-%m-%dT%H:%M:%S%z')
 
-if cityWarningData[1]['cityCount'] > 0:
+#警報等が一つ以上ある場合で前回より更新しているまたは、0分の場合
+if cityWarningData[1]['cityCount'] > 0 and (jmaUpdate > jmaLastUpdate or now.minute == 0):
     wLevels = mkMap(cityWarningData[0])
     imageList = mkImage(cityWarningData[0])
+    #画像リスト
     ids = []
     for path in imageList:
         id = uploadImage(path)
         ids.append(id)
-
+    #以下ツイート文生成→ツイート
     tweetText = f'{now.day}日{now.hour}時{now.minute}分現在 #滋賀県 内'
     if cityWarningData[1]['cityCount'] == 20:
         tweetText += '全域に'
@@ -61,17 +71,16 @@ if cityWarningData[1]['cityCount'] > 0:
     if wLevels[0]:
         tweetText += '大切な命を守るため、身の安全を確保してください。\n'
     tweetText += '#滋賀県気象情報\n'
-    tweetText += f'(気象庁更新時刻 {jmalastUpdate.day}日{jmalastUpdate.hour}時{jmalastUpdate.minute}分)'
+    tweetText += f'(気象庁更新時刻 {jmaUpdate.day}日{jmaUpdate.hour}時{jmaUpdate.minute}分)'
     tweet(tweetText,mediaIDs=ids)
-elif cityWarningData[1]["endWarning"] and  jmalastUpdate > now + timedelta(minutes=-1):
-    tweetText = f'{now.day}日{now.hour}時{now.minute}分現在 #滋賀県 内に発令されていた #注意報 #警報 は解除されました。 #滋賀県気象情報\n(気象庁更新時刻 {jmalastUpdate.day}日{jmalastUpdate.hour}時{jmalastUpdate.minute}分)'
+    #画像の削除
+    for path in imageList:
+        remove(path)
+    remove(f'{dirName}/warningMap.png')
+#警報等がなくなった場合で前回のアップデート時間と違う場合
+elif cityWarningData[1]["endWarning"] and  jmaUpdate != jmaLastUpdate:
+    tweetText = f'{now.day}日{now.hour}時{now.minute}分現在 #滋賀県 内に発令されていた #注意報 #警報 は解除されました。 #滋賀県気象情報\n(気象庁更新時刻 {jmaUpdate.day}日{jmaUpdate.hour}時{jmaUpdate.minute}分)'
     tweet(tweetText)
-
-from os import remove
-from os.path import dirname, abspath
-dirName = dirname(abspath(__file__))
-
-for path in imageList:
-    remove(path)
-
-remove(f'{dirName}/warningMap.png')
+#気象庁のアップデート時間の更新(更新の有無に関わらず)
+with open(f'{dirName}/tmp.txt', mode='w') as f:
+    f.write(cityWarningData[1]['update'])
