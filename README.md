@@ -25,3 +25,9 @@ pip install requirements.txt
 or
 pip3 install requirements.txt
 ```
+
+
+### Ubuntu(Rock3A)でのその他操作
+```
+sudo apt install libgdal-dev build-essential libssl-dev libffi-dev python3-dev
+```
