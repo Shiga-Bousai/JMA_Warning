@@ -1,11 +1,12 @@
 from warning import getWarning, mkMap, mkImage
-import sys
 from os import remove
-from os.path import dirname, abspath
 from datetime import datetime, timezone, timedelta
 
+from os.path import dirname, abspath
+import sys
 sys.path.append(abspath("../"))
 from pkg.twitter_python import tweet,uploadImage
+dirName = dirname(abspath(__file__))
 
 args = sys.argv
 print(args)
@@ -37,7 +38,6 @@ cityWarningData = [{
 },{'update': '2022-03-13T15:57:00+09:00', 'cityCount': 20, 'endWarning' : False}]
 """
 
-dirName = dirname(abspath(__file__))
 if 'update' in cityWarningData[1]:
     #時刻周りの生成
     #now : 現在時刻
