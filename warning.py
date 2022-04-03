@@ -28,7 +28,7 @@ def jmaAPI(url):
 def getWarning(lastUpdateTime, args):
     newestUpdateDatetime = None
     jmaList = jmaAPI('https://www.data.jma.go.jp/developer/xml/feed/extra_l.xml')
-    for listData in jmaList["feed"]["entry"]:
+    for listData in reversed(jmaList["feed"]["entry"]):
         updateDatetime = datetime.strptime(listData["updated"], '%Y-%m-%dT%H:%M:%S%z')
         if listData["author"]["name"] == '彦根地方気象台' and updateDatetime >= lastUpdateTime:
             updateBool =  updateDatetime > lastUpdateTime
