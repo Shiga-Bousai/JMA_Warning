@@ -32,14 +32,13 @@ def getWarning(lastUpdateTime, args):
         updateDatetime = datetime.strptime(listData["updated"], '%Y-%m-%dT%H:%M:%S%z')
         if listData["author"]["name"] == '彦根地方気象台' and updateDatetime >= lastUpdateTime:
             updateBool =  updateDatetime > lastUpdateTime
-            if newestUpdateDatetime == None:
-                newestUpdateDatetime = listData["updated"]
             if listData["title"] == '気象特別警報・警報・注意報':
                 jmaDetail = jmaAPI(listData["id"])
                 weatherWarningData(jmaDetail, updateBool, args)
             elif listData["title"] == '土砂災害警戒情報':
                 jmaDetail = jmaAPI(listData["id"])
                 landslideAlertInfo(jmaDetail, updateBool, args)
+            newestUpdateDatetime = listData["updated"]
                 
     return newestUpdateDatetime
 
