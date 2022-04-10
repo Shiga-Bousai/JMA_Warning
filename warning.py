@@ -219,7 +219,7 @@ def weatherWarningData(jmaDetail, updateBool, args):
     otherData['cityCount'] = wCount
 
     #jmaUpdate : 気象庁XMLアップデート時間
-    jmaUpdate = datetime.strptime(otherData['update'], '%Y-%m-%dT%H:%M:%S%z')
+    jmaUpdate = datetime.strptime(otherData['update'].timedelta(hours=9), '%Y-%m-%dT%H:%M:%S%z')
     #警報等が一つ以上ある場合で前回より更新しているまたは、0分の場合
     if otherData['cityCount'] > 0 and (updateBool or now.minute == 0):
         wLevels = mkMap(cityWarningCode)
