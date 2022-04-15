@@ -13,6 +13,7 @@ args = sys.argv
 #jmaLastUpdate : 前回のアップデート
 with open(f'{dirName}/tmp.txt') as f:
     jmaLastUpdate = f.read()
+    jmaLastUpdate = jmaLastUpdate.replace("\n", "").replace(" ", "")
     if jmaLastUpdate != "":
         jmaLastUpdateDatetime = datetime.strptime(jmaLastUpdate, '%Y-%m-%dT%H:%M:%S%z')
     else:
