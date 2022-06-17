@@ -13,6 +13,8 @@ sys.path.append(abspath("../"))
 from pkg.twitter_python import tweet,uploadImage
 dirName = dirname(abspath(__file__))
 
+import mkTextAlert
+
 imageBaseColor = "#313131"
 
 fontpathGSG_B = join(dirName,abspath("../fonts/GenShinGothic-Bold.ttf"))
@@ -24,6 +26,15 @@ def jmaAPI(url):
     jmaReq = requests.get(url)
     jmaReq.encoding = 'utf-8'
     return xmltodict.parse(jmaReq.text)
+
+"""
+mkTextSettings = {
+    'mainBaseColor' : '',
+    'mainTextColor' : '',
+    'headerBaseColor' : '',
+    'headerTextColor' : ''
+}
+"""
 
 def getWarning(lastUpdateTime, args):
     newestUpdateDatetime = None
@@ -38,6 +49,15 @@ def getWarning(lastUpdateTime, args):
             elif listData["title"] == '土砂災害警戒情報':
                 jmaDetail = jmaAPI(listData["id"])
                 landslideAlertInfo(jmaDetail, updateBool, args)
+            elif listData["title"] == '熱中症警戒アラート':
+                jmaDetail = jmaAPI(listData["id"])
+                mkTextSettings = {
+                    'mainBaseColor' : '',
+                    'mainTextColor' : '',
+                    'headerBaseColor' : '#952091',
+                    'headerTextColor' : ''
+                }
+                onceAlert(jmaDetail, updateBool, f'{dirName}/wTextImg/neccyuu.jpeg', mkTextSettings, args)
             newestUpdateDatetime = listData["updated"]
                 
     return newestUpdateDatetime
@@ -283,53 +303,21 @@ def landslideAlertInfo(jmaLLADetail, updateBool, args):
     
     #一市町以上ある場合で、更新されたor0分の場合
     if cityCount and (updateBool or now.minute == 0):
-        #Baseになる画像読み込み
-        BaseBG = Image.open(f'{dirName}/base_img/landslideAlertInfo.jpeg')
-        draw = ImageDraw.Draw(BaseBG)
-        baseTop = 200
-        baseLeft = 100
-
         #気象庁電文描画
         headLineText = jmaLLADetail["Report"]["Head"]["Headline"]["Text"]
-        #改行ごとにarray化
-        headLineText = headLineText.split('\n')
-        #一文字ごとに描画する
-        for headLineTextArr in headLineText:
-            for hl_text in headLineTextArr:
-                textBox = draw.multiline_textbbox((0,0), hl_text, font=fontGSG_B35)
-                textW = textBox[2] - textBox[0]
-                if baseLeft + textW > 1850:
-                    baseTop += 50
-                    baseLeft = 100
-                draw.multiline_text((baseLeft,baseTop), hl_text, font=fontGSG_B35,fill='#efefef',anchor='lm')
-                baseLeft += textW
-            baseTop += 50
-            baseLeft = 100
-        baseTop += 10
+        warningTextImage = f'{dirName}/wTextImg/landslideAlertInfo.jpeg'
 
-        #電文と内容の分割線
-        draw.rectangle((baseLeft, baseTop,1880,baseTop + 2), fill='#efefef')
+        mkTextAlert(
+            outpputFile=warningTextImage,
+            headerText='土砂災害警戒情報',
+            mainText=headLineText,
+            mainBaseColor='#121212',
+            mainTextColor='#fcfefd',
+            headerBaseColor='#952091',
+            headerTextColor='#fcfefd',
+            icon=None
+        )
 
-        #内容の描画
-        for lvName in alertLv:
-            if alertLv[lvName] != []:
-                baseTop += 60
-                draw.multiline_text((baseLeft,baseTop), f'{lvName} : ', font=fontGSG_B40,fill='#efefef',anchor='lm')
-                baseLeft = 220
-                for alertData in alertLv[lvName]:
-                    textBox = draw.multiline_textbbox((0,0), alertData, font=fontGSG_B40)
-                    textW = textBox[2] - textBox[0]
-                    if baseLeft + textW > 1850:
-                        baseTop += 60
-                        baseLeft = 220
-                    draw.multiline_text((baseLeft,baseTop), alertData, font=fontGSG_B40,fill='#efefef',anchor='lm')
-                    baseLeft += textW + 10
-                baseTop += 20
-                baseLeft = 100
-
-        #ファイル保存からのアップロード
-        wImagePath = f'{dirName}/landslideAlertInfo.jpeg'
-        BaseBG.save(wImagePath)
         if alertLv["発表"] != [] or alertLv["継続"] != []:
             tweetText = """#土砂災害警戒情報 発令中
 土砂災害警戒区域等では土砂災害が発生しやすい状況になっています。
@@ -341,11 +329,42 @@ https://shiga-bousai.jp/dmap/map/index?l=M_r_k_d_risk_map&f=0010011111101000000&
         elif alertLv["発表"] == [] and alertLv["継続"] == [] and alertLv["解除"] != []:
             tweetText = "#土砂災害警戒情報 は解除されました。\n地盤が緩んでいるところもあります。引き続き警戒を。"
 
-        id = uploadImage(wImagePath)
+        id = uploadImage(warningTextImage)
 
         if args == ['main.py']:
             tweet(tweetText,mediaIDs=[id])
         elif args[1] == 'gitTest':
             print(tweetText)
 
-        remove(wImagePath)
+        remove(warningTextImage)
+
+def onceAlert(jmaDetail, updateBool, outputDir, mkTextSettings, args):
+    if updateBool:
+        #更新さらた場合のみ
+        infoType = jmaDetail['Report']['Head']['InfoType'] #情報提供タイプ
+        headTitle = jmaDetail['Report']['Head']['Title'] #headerのタイトル
+        headDatetime = jmaDetail['Report']['Head']['ReportDateTime'] #header datetime
+        contentText = jmaDetail["Report"]["Body"]["Comment"]["Text"]['#text'] #気象庁電文描画
+
+        print(
+            infoType,
+            headTitle,
+            headDatetime,
+            contentText,
+            outputDir
+        )
+
+        mkTextAlert.main(
+            outpputFile     = outputDir,
+            headerText      = headTitle,
+            mainText        = contentText,
+            mainBaseColor   = mkTextSettings['mainBaseColor'],
+            mainTextColor   = mkTextSettings['mainTextColor'],
+            headerBaseColor = mkTextSettings['headerBaseColor'],
+            headerTextColor = mkTextSettings['headerTextColor'],
+            icon=None
+        )
+
+        if infoType in ['発表', '訂正', '遅延']:
+            tweetText = f'[{infoType}]\n\n{headTitle}\n受信時刻 : {headDatetime}\n\n#滋賀県 #気象情報'
+            print(tweetText)
