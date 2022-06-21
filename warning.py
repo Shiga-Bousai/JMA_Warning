@@ -78,7 +78,7 @@ def mkMap(cityCodeDict):
             if int(cityCodeDict[wCityCode][0]) >= 32:
                 cityWarColor = "#7030a0"
                 wLevels[0] = True
-            elif int(cityCodeDict[wCityCode][0]) <= 10:
+            elif int(cityCodeDict[wCityCode][0]) <= 9:
                 cityWarColor = "#fe0000"
                 wLevels[1] = True
             else:
@@ -184,10 +184,11 @@ def mkImage(cityWarningData):
         draw.multiline_text((textW,textH + 5), cityData, font=fontGSG_B40,fill='#121212',anchor='lm')
         draw.rectangle(((textW - 5, textH + 33, textW + 1080, textH + 35)), fill="#f1f1f1") #下のバー描画
         textW = 720 + textWidth + 50
+        print(cityWarningData[cWD])
         for wCode in cityWarningData[cWD]:
             if int(wCode) >= 32:
                 boxFillColor = "#7030a0"
-            elif int(wCode) <= 10:
+            elif int(wCode) <= 9:
                 boxFillColor = "#fe0000"
             else:
                 boxFillColor = "#febe00"
