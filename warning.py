@@ -38,8 +38,8 @@ mkTextSettings = {
 
 def getWarning(lastUpdateTime, args):
     newestUpdateDatetime = None
-    jmaList = jmaAPI('https://www.data.jma.go.jp/developer/xml/feed/extra_l.xml')
-    for listData in reversed(jmaList["feed"]["entry"]):
+    jmaListExtra = jmaAPI('https://www.data.jma.go.jp/developer/xml/feed/extra_l.xml')
+    for listData in reversed(jmaListExtra["feed"]["entry"]):
         updateDatetime = datetime.strptime(listData["updated"], '%Y-%m-%dT%H:%M:%S%z')
         if listData["author"]["name"] == '彦根地方気象台' and updateDatetime >= lastUpdateTime:
             updateBool =  updateDatetime > lastUpdateTime
@@ -49,17 +49,16 @@ def getWarning(lastUpdateTime, args):
             elif listData["title"] == '土砂災害警戒情報':
                 jmaDetail = jmaAPI(listData["id"])
                 landslideAlertInfo(jmaDetail, updateBool, args)
-            elif listData["title"] == '熱中症警戒アラート':
-                jmaDetail = jmaAPI(listData["id"])
-                mkTextSettings = {
-                    'mainBaseColor' : '',
-                    'mainTextColor' : '',
-                    'headerBaseColor' : '#952091',
-                    'headerTextColor' : ''
-                }
-                onceAlert(jmaDetail, updateBool, f'{dirName}/wTextImg/neccyuu.jpeg', mkTextSettings, args)
+        elif listData["author"]["name"] == '環境省 気象庁'and listData["content"] == '【滋賀県熱中症警戒アラート】' and updateDatetime >= lastUpdateTime:
+            jmaDetail = jmaAPI(listData["id"])
+            mkTextSettings = {
+                'mainBaseColor' : '',
+                'mainTextColor' : '',
+                'headerBaseColor' : '#952091',
+                'headerTextColor' : ''
+            }
+            onceAlert(jmaDetail, updateBool, f'{dirName}/wTextImg/neccyuu.jpeg', mkTextSettings, args)
             newestUpdateDatetime = listData["updated"]
-                
     return newestUpdateDatetime
 
 def mkMap(cityCodeDict):
@@ -86,7 +85,7 @@ def mkMap(cityCodeDict):
                 wLevels[2] = True
         if wCityCode == "2520102":
             #大津市北部用処理
-            otsuCity = gpd.read_file(f'{dirName}/mapData/shape/A32-16_25.shp',encoding='SHIFT-JIS') #滋賀県内の学区分けのデータ
+            otsuCity = gpd.read_file(f'{dirName}/mapData/A32-16_25.geojson') #滋賀県内の学区分けのデータ
             otsuNoath = ["志賀中学校","葛川中学校","伊香立中学校"]
             filt = otsuCity[ otsuCity['A32_008'].isin(otsuNoath)]
             filt.plot(ax=ax, color='none', edgecolor='none', linestyle='--', linewidth=0.3)
@@ -99,7 +98,7 @@ def mkMap(cityCodeDict):
             shigaCity[shigaCity['N03_007'].isin([wCityCode[:-2]])].plot(ax=ax, color=cityWarColor, edgecolor='#010101', linewidth=1)
     [addCityMap(cityCodeDict, wCityCode) for wCityCode in cityCodeDict]
     #琵琶湖描画処理
-    rakeBiwa = gpd.read_file(f'{dirName}/mapData/W09-05_GML/W09-05-g_Lake.shp',encoding='SHIFT-JIS') #全国の胡沼データ
+    rakeBiwa = gpd.read_file(f'{dirName}/mapData/W09-05-g_Lake.geojson') #全国の胡沼データ
     rakeBiwa = rakeBiwa[rakeBiwa['W09_001'].isin(['琵琶湖'])] #琵琶湖だけ抜き出す
     rakeBiwa.plot(ax=ax, color="#121212", edgecolor='#010101', linewidth=1)
     plt.axis('off')
@@ -369,3 +368,8 @@ def onceAlert(jmaDetail, updateBool, outputDir, mkTextSettings, args):
         if infoType in ['発表', '訂正', '遅延']:
             tweetText = f'[{infoType}]\n\n{headTitle}\n受信時刻 : {headDatetime}\n\n#滋賀県 #気象情報'
             print(tweetText)
+        
+        id = uploadImage(outputDir)
+        
+        if args == ['main.py']:
+            tweet(tweetText,mediaIDs=[id])
