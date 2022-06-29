@@ -1,6 +1,7 @@
 from datetime import datetime, timezone, timedelta
 
 import requests
+from sqlalchemy import null
 import xmltodict
 from PIL import Image, ImageDraw, ImageFont #pip install pillow-simd
 import matplotlib.pyplot as plt
@@ -49,15 +50,15 @@ def getWarning(lastUpdateTime, args):
             elif listData["title"] == '土砂災害警戒情報':
                 jmaDetail = jmaAPI(listData["id"])
                 landslideAlertInfo(jmaDetail, updateBool, args)
-        elif listData["author"]["name"] == '環境省 気象庁'and listData["content"]["#text"] == '【滋賀県熱中症警戒アラート】' and updateDatetime >= lastUpdateTime:
+        elif listData["author"]["name"] == '環境省 気象庁'and listData["content"]["#text"] == '【滋賀県熱中症警戒アラート】' and updateDatetime > lastUpdateTime:
             jmaDetail = jmaAPI(listData["id"])
             mkTextSettings = {
-                'mainBaseColor' : '',
-                'mainTextColor' : '',
+                'mainBaseColor' : '#121212',
+                'mainTextColor' : '#fcfefd',
                 'headerBaseColor' : '#952091',
-                'headerTextColor' : ''
+                'headerTextColor' : '#fcfefd',
             }
-            onceAlert(jmaDetail, updateBool, f'{dirName}/wTextImg/neccyuu.jpeg', mkTextSettings, args)
+            onceAlert(jmaDetail, f'{dirName}/wTextImg/neccyuu.jpeg', mkTextSettings, args)
             newestUpdateDatetime = listData["updated"]
     return newestUpdateDatetime
 
@@ -338,38 +339,37 @@ https://shiga-bousai.jp/dmap/map/index?l=M_r_k_d_risk_map&f=0010011111101000000&
 
         remove(warningTextImage)
 
-def onceAlert(jmaDetail, updateBool, outputDir, mkTextSettings, args):
-    if updateBool:
-        #更新さらた場合のみ
-        infoType = jmaDetail['Report']['Head']['InfoType'] #情報提供タイプ
-        headTitle = jmaDetail['Report']['Head']['Title'] #headerのタイトル
-        headDatetime = jmaDetail['Report']['Head']['ReportDateTime'] #header datetime
-        contentText = jmaDetail["Report"]["Body"]["Comment"]["Text"]['#text'] #気象庁電文描画
+def onceAlert(jmaDetail, outputDir, mkTextSettings, args):
+    #更新さらた場合のみ
+    infoType = jmaDetail['Report']['Head']['InfoType'] #情報提供タイプ
+    headTitle = jmaDetail['Report']['Head']['Title'] #headerのタイトル
+    headDatetime = jmaDetail['Report']['Head']['ReportDateTime'] #header datetime
+    contentText = jmaDetail["Report"]["Body"]["Comment"]["Text"]['#text'] #気象庁電文描画
 
-        print(
-            infoType,
-            headTitle,
-            headDatetime,
-            contentText,
-            outputDir
-        )
+    print(
+        infoType,
+        headTitle,
+        headDatetime,
+        contentText,
+        outputDir
+    )
 
-        mkTextAlert.main(
-            outpputFile     = outputDir,
-            headerText      = headTitle,
-            mainText        = contentText,
-            mainBaseColor   = mkTextSettings['mainBaseColor'],
-            mainTextColor   = mkTextSettings['mainTextColor'],
-            headerBaseColor = mkTextSettings['headerBaseColor'],
-            headerTextColor = mkTextSettings['headerTextColor'],
-            icon=None
-        )
+    mkTextAlert.main(
+        outpputFile     = outputDir,
+        headerText      = headTitle,
+        mainText        = contentText,
+        mainBaseColor   = mkTextSettings['mainBaseColor'],
+        mainTextColor   = mkTextSettings['mainTextColor'],
+        headerBaseColor = mkTextSettings['headerBaseColor'],
+        headerTextColor = mkTextSettings['headerTextColor'],
+        icon=None
+    )
 
-        if infoType in ['発表', '訂正', '遅延']:
-            tweetText = f'[{infoType}]\n\n{headTitle}\n受信時刻 : {headDatetime}\n\n#滋賀県 #気象情報'
-            print(tweetText)
-        
-        id = uploadImage(outputDir)
-        
-        if args == ['main.py']:
-            tweet(tweetText,mediaIDs=[id])
+    if infoType in ['発表', '訂正', '遅延']:
+        tweetText = f'[{infoType}]\n\n{headTitle}\n受信時刻 : {headDatetime}\n\n#滋賀県 #気象情報'
+        print(tweetText)
+    
+    id = uploadImage(outputDir)
+    
+    if args == ['main.py']:
+        tweet(tweetText,mediaIDs=[id])
