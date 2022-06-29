@@ -1,7 +1,6 @@
 from datetime import datetime, timezone, timedelta
 
 import requests
-from sqlalchemy import null
 import xmltodict
 from PIL import Image, ImageDraw, ImageFont #pip install pillow-simd
 import matplotlib.pyplot as plt
