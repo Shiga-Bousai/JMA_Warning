@@ -38,7 +38,7 @@ mkTextSettings = {
 
 def getWarning(lastUpdateTime, args):
     newestUpdateDatetime = None
-    jmaListExtra = jmaAPI('https://www.data.jma.go.jp/developer/xml/feed/extra_l.xml')
+    jmaListExtra = jmaAPI('https://www.data.jma.go.jp/developer/xml/feed/extra.xml')
     for listData in reversed(jmaListExtra["feed"]["entry"]):
         updateDatetime = datetime.strptime(listData["updated"], '%Y-%m-%dT%H:%M:%S%z')
         if listData["author"]["name"] == '彦根地方気象台' and updateDatetime >= lastUpdateTime:
@@ -49,7 +49,7 @@ def getWarning(lastUpdateTime, args):
             elif listData["title"] == '土砂災害警戒情報':
                 jmaDetail = jmaAPI(listData["id"])
                 landslideAlertInfo(jmaDetail, updateBool, args)
-        elif listData["author"]["name"] == '環境省 気象庁'and listData["content"] == '【滋賀県熱中症警戒アラート】' and updateDatetime >= lastUpdateTime:
+        elif listData["author"]["name"] == '環境省 気象庁'and listData["content"]["#text"] == '【滋賀県熱中症警戒アラート】' and updateDatetime >= lastUpdateTime:
             jmaDetail = jmaAPI(listData["id"])
             mkTextSettings = {
                 'mainBaseColor' : '',
