@@ -58,7 +58,7 @@ def getWarning(lastUpdateTime, args):
                 'headerTextColor' : '#fcfefd',
             }
             onceAlert(jmaDetail, f'{dirName}/wTextImg/neccyuu.jpeg', mkTextSettings, args)
-            newestUpdateDatetime = listData["updated"]
+        newestUpdateDatetime = listData["updated"]
     return newestUpdateDatetime
 
 def mkMap(cityCodeDict):
