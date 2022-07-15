@@ -13,7 +13,7 @@ sys.path.append(abspath("../"))
 from pkg.twitter_python import tweet,uploadImage
 dirName = dirname(abspath(__file__))
 
-import mkTextAlert
+import mkAlertImg
 
 imageBaseColor = "#313131"
 
@@ -36,6 +36,18 @@ mkTextSettings = {
 }
 """
 
+textTweetSettings = {
+    "記録的短時間大雨情報" : {
+        "fileName" : "heavy_rain",
+        "textSetting" : {
+            'mainBaseColor' : '#121212',
+            'mainTextColor' : '#fcfefd',
+            'headerBaseColor' : '#952091',
+            'headerTextColor' : '#fcfefd',
+        }
+    }
+}
+
 def getWarning(lastUpdateTime, args):
     newestUpdateDatetime = None
     jmaListExtra = jmaAPI('https://www.data.jma.go.jp/developer/xml/feed/extra.xml')
@@ -49,6 +61,9 @@ def getWarning(lastUpdateTime, args):
             elif listData["title"] == '土砂災害警戒情報':
                 jmaDetail = jmaAPI(listData["id"])
                 landslideAlertInfo(jmaDetail, updateBool, args)
+            elif listData["title"] in ['記録的短時間大雨情報'] and updateDatetime > lastUpdateTime:
+                jmaDetail = jmaAPI(listData["id"])
+                onceAlert(jmaDetail, f'{dirName}/wTextImg/{textTweetSettings[listData["title"]]["fileName"]}.jpeg', textTweetSettings[listData["title"]]["textSetting"], args)
         elif listData["author"]["name"] == '環境省 気象庁'and listData["content"]["#text"] == '【滋賀県熱中症警戒アラート】' and updateDatetime > lastUpdateTime:
             jmaDetail = jmaAPI(listData["id"])
             mkTextSettings = {
@@ -252,7 +267,7 @@ def weatherWarningData(jmaDetail, updateBool, args):
             ids.append(id)
         #以下ツイート文生成→ツイート
         tweetText = f'{now.day}日{now.hour}時{now.minute}分現在 #滋賀県 内'
-        if otherData['cityCount'] == 20:
+        if otherData['cityCount'] >= 20:
             tweetText += '全域に'
         else:
             tweetText += '一部地域に'
@@ -307,7 +322,7 @@ def landslideAlertInfo(jmaLLADetail, updateBool, args):
         headLineText = jmaLLADetail["Report"]["Head"]["Headline"]["Text"]
         warningTextImage = f'{dirName}/wTextImg/landslideAlertInfo.jpeg'
 
-        mkTextAlert(
+        mkAlertImg.textOnly(
             outpputFile=warningTextImage,
             headerText='土砂災害警戒情報',
             mainText=headLineText,
@@ -353,7 +368,7 @@ def onceAlert(jmaDetail, outputDir, mkTextSettings, args):
         outputDir
     )
 
-    mkTextAlert.main(
+    mkAlertImg.textOnly(
         outpputFile     = outputDir,
         headerText      = headTitle,
         mainText        = contentText,

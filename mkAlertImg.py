@@ -1,4 +1,17 @@
+from datetime import datetime, timezone, timedelta
+
+import requests
+import xmltodict
 from PIL import Image, ImageDraw, ImageFont #pip install pillow-simd
+import matplotlib.pyplot as plt
+import geopandas as gpd
+
+from os import remove
+from os.path import dirname, abspath, join
+import sys
+sys.path.append(abspath("../"))
+from pkg.twitter_python import tweet,uploadImage
+dirName = dirname(abspath(__file__))
 
 from os.path import dirname, abspath, join
 dirName = dirname(abspath(__file__))
@@ -9,7 +22,7 @@ fontpathGSG_B = join(dirName,abspath("../fonts/BIZ-UDGothicB.ttc"))
 fontGSG_B30 = ImageFont.truetype(fontpathGSG_B, 30)
 fontGSG_B60 = ImageFont.truetype(fontpathGSG_B, 60)
 
-def main(
+def textOnly(
   outpputFile=f'{dirName}/output.jpeg',
   headerText='',
   mainText='',
@@ -65,6 +78,3 @@ def main(
   #画像の保存
   wImagePath = f'{outpputFile}'
   BaseBG.save(wImagePath)
-
-if __name__ == '__main__':
-  main()
