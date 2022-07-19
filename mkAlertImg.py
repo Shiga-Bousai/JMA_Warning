@@ -65,7 +65,7 @@ def textOnly(
           if baseLeft + textW > 1230:
               baseTop += 50
               baseLeft = 50
-          draw.multiline_text((baseLeft,baseTop), hl_text, font=fontGSG_B30,fill='#efefef',anchor='lm')
+          draw.multiline_text((baseLeft,baseTop), hl_text, font=fontGSG_B30,fill=mainTextColor,anchor='lm')
           baseLeft += textW
       baseTop += 50
       baseLeft = 100

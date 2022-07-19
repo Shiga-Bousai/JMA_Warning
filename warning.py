@@ -5,6 +5,7 @@ import xmltodict
 from PIL import Image, ImageDraw, ImageFont #pip install pillow-simd
 import matplotlib.pyplot as plt
 import geopandas as gpd
+import re
 
 from os import remove
 from os.path import dirname, abspath, join
@@ -37,6 +38,33 @@ mkTextSettings = {
 """
 
 textTweetSettings = {
+    "nomal" : {
+        "fileName" : "nomal",
+        "textSetting" : {
+            'mainBaseColor' : '#fefefe',
+            'mainTextColor' : '#121212',
+            'headerBaseColor' : '#A5D4A6',
+            'headerTextColor' : '#121212',
+        }
+    },
+    "府県気象情報" : {
+        "fileName" : "pref_whether_info",
+        "textSetting" : {
+            'mainBaseColor' : '#fefefe',
+            'mainTextColor' : '#121212',
+            'headerBaseColor' : '#A5D4A6',
+            'headerTextColor' : '#121212',
+        }
+    },
+    "熱中症警戒アラート" : {
+        "fileName" : "heatstroke",
+        "textSetting" : {
+            'mainBaseColor' : '#121212',
+            'mainTextColor' : '#fcfefd',
+            'headerBaseColor' : '#952091',
+            'headerTextColor' : '#fcfefd',
+        }
+    },
     "記録的短時間大雨情報" : {
         "fileName" : "heavy_rain",
         "textSetting" : {
@@ -53,26 +81,31 @@ def getWarning(lastUpdateTime, args):
     jmaListExtra = jmaAPI('https://www.data.jma.go.jp/developer/xml/feed/extra.xml')
     for listData in reversed(jmaListExtra["feed"]["entry"]):
         updateDatetime = datetime.strptime(listData["updated"], '%Y-%m-%dT%H:%M:%S%z')
-        if listData["author"]["name"] == '彦根地方気象台' and updateDatetime >= lastUpdateTime:
+        if '彦根地方気象台' in listData["author"]["name"] and updateDatetime > lastUpdateTime:
             updateBool =  updateDatetime > lastUpdateTime
             if listData["title"] == '気象特別警報・警報・注意報':
                 jmaDetail = jmaAPI(listData["id"])
-                weatherWarningData(jmaDetail, updateBool, args)
+                #weatherWarningData(jmaDetail, updateBool, args)
             elif listData["title"] == '土砂災害警戒情報':
                 jmaDetail = jmaAPI(listData["id"])
                 landslideAlertInfo(jmaDetail, updateBool, args)
-            elif listData["title"] in ['記録的短時間大雨情報'] and updateDatetime > lastUpdateTime:
+            elif listData["title"] in ['府県気象情報']:
                 jmaDetail = jmaAPI(listData["id"])
                 onceAlert(jmaDetail, f'{dirName}/wTextImg/{textTweetSettings[listData["title"]]["fileName"]}.jpeg', textTweetSettings[listData["title"]]["textSetting"], args)
-        elif listData["author"]["name"] == '環境省 気象庁'and listData["content"]["#text"] == '【滋賀県熱中症警戒アラート】' and updateDatetime > lastUpdateTime:
+        elif '気象庁' in listData["author"]["name"] and updateDatetime > lastUpdateTime \
+            and re.findall(
+                '【滋賀県記録的短時間大雨情報】|【滋賀県熱中症警戒アラート】',
+                listData["content"]["#text"]
+            ):
+                jmaDetail = jmaAPI(listData["id"])
+                #onceAlert(jmaDetail, f'{dirName}/wTextImg/{textTweetSettings[listData["title"]]["fileName"]}.jpeg', textTweetSettings[listData["title"]]["textSetting"], args)
+                #print(listData["content"]["#text"])
+        elif '大阪管区気象台' in listData["author"]["name"] and updateDatetime > lastUpdateTime and '滋賀県' in listData["content"]["#text"]:
             jmaDetail = jmaAPI(listData["id"])
-            mkTextSettings = {
-                'mainBaseColor' : '#121212',
-                'mainTextColor' : '#fcfefd',
-                'headerBaseColor' : '#952091',
-                'headerTextColor' : '#fcfefd',
-            }
-            onceAlert(jmaDetail, f'{dirName}/wTextImg/neccyuu.jpeg', mkTextSettings, args)
+            onceAlert(jmaDetail, f'{dirName}/wTextImg/{textTweetSettings["nomal"]["fileName"]}.jpeg', textTweetSettings["nomal"]["textSetting"], args)
+
+
+
         newestUpdateDatetime = listData["updated"]
     return newestUpdateDatetime
 
@@ -236,6 +269,7 @@ def weatherWarningData(jmaDetail, updateBool, args):
     wCount = 0
     otherData["endWarning"] = True #解除 注意報なしチェック
     updatedDatetime = jmaDetail["Report"]["Control"]["DateTime"]
+    headText = jmaDetail['Report']['Head']['Headline']['Text']
     otherData["update"] = updatedDatetime #アップロード時間追加
     cityWarningCode = {"2520101":[],"2520102":[],"2520200":[],"2520300":[],"2520400":[],"2520600":[],"2520700":[],"2520800":[],"2520900":[],"2521000":[],"2521100":[],"2521200":[],"2521300":[],"2521400":[],"2538300":[],"2538400":[],"2542500":[],"2544100":[],"2544200":[],"2544300":[]}
     for data in jmaDetail["Report"]["Body"]["Warning"][3]["Item"]:
@@ -282,7 +316,7 @@ def weatherWarningData(jmaDetail, updateBool, args):
         if wLevels[0]:
             tweetText += '大切な命を守るため、身の安全を確保してください。\n'
         tweetText += '#滋賀県気象情報\n'
-        tweetText += f'(気象庁更新時刻 {jmaUpdate.day}日{jmaUpdate.hour}時{jmaUpdate.minute}分)'
+        tweetText += f'{headText}\n(気象庁更新時刻 {jmaUpdate.day}日{jmaUpdate.hour}時{jmaUpdate.minute}分)'
         if args == ['main.py']:
             tweet(tweetText,mediaIDs=ids)
         elif args[1] == 'gitTest':
@@ -340,7 +374,7 @@ def landslideAlertInfo(jmaLLADetail, updateBool, args):
 
 滋賀県のハザードマップはこちら↓
 https://shiga-bousai.jp/dmap/map/index?l=M_r_k_d_risk_map&f=0010011111101000000&b=google_base&z=10&x=15156480.5&y=4197618.7349338
-"""     
+"""
         elif alertLv["発表"] == [] and alertLv["継続"] == [] and alertLv["解除"] != []:
             tweetText = "#土砂災害警戒情報 は解除されました。\n地盤が緩んでいるところもあります。引き続き警戒を。"
 
@@ -357,6 +391,7 @@ def onceAlert(jmaDetail, outputDir, mkTextSettings, args):
     #更新さらた場合のみ
     infoType = jmaDetail['Report']['Head']['InfoType'] #情報提供タイプ
     headTitle = jmaDetail['Report']['Head']['Title'] #headerのタイトル
+    headText = jmaDetail['Report']['Head']['Headline']['Text'] #headerのタイトル
     headDatetime = jmaDetail['Report']['Head']['ReportDateTime'] #header datetime
     contentText = jmaDetail["Report"]["Body"]["Comment"]["Text"]['#text'] #気象庁電文描画
 
@@ -380,7 +415,7 @@ def onceAlert(jmaDetail, outputDir, mkTextSettings, args):
     )
 
     if infoType in ['発表', '訂正', '遅延']:
-        tweetText = f'[{infoType}]\n\n{headTitle}\n受信時刻 : {headDatetime}\n\n#滋賀県 #気象情報'
+        tweetText = f'[{infoType}]{headTitle}\n\n{headText}\n受信時刻 : {headDatetime}\n\n#滋賀県 #気象情報'
         print(tweetText)
     
     id = uploadImage(outputDir)
