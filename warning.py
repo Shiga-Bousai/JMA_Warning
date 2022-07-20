@@ -85,7 +85,7 @@ def getWarning(lastUpdateTime, args):
             updateBool =  updateDatetime > lastUpdateTime
             if listData["title"] == '気象特別警報・警報・注意報':
                 jmaDetail = jmaAPI(listData["id"])
-                #weatherWarningData(jmaDetail, updateBool, args)
+                weatherWarningData(jmaDetail, updateBool, args)
             elif listData["title"] == '土砂災害警戒情報':
                 jmaDetail = jmaAPI(listData["id"])
                 landslideAlertInfo(jmaDetail, updateBool, args)
@@ -98,14 +98,11 @@ def getWarning(lastUpdateTime, args):
                 listData["content"]["#text"]
             ):
                 jmaDetail = jmaAPI(listData["id"])
-                #onceAlert(jmaDetail, f'{dirName}/wTextImg/{textTweetSettings[listData["title"]]["fileName"]}.jpeg', textTweetSettings[listData["title"]]["textSetting"], args)
+                onceAlert(jmaDetail, f'{dirName}/wTextImg/{textTweetSettings[listData["title"]]["fileName"]}.jpeg', textTweetSettings[listData["title"]]["textSetting"], args)
                 #print(listData["content"]["#text"])
         elif '大阪管区気象台' in listData["author"]["name"] and updateDatetime > lastUpdateTime and '滋賀県' in listData["content"]["#text"]:
             jmaDetail = jmaAPI(listData["id"])
             onceAlert(jmaDetail, f'{dirName}/wTextImg/{textTweetSettings["nomal"]["fileName"]}.jpeg', textTweetSettings["nomal"]["textSetting"], args)
-
-
-
         newestUpdateDatetime = listData["updated"]
     return newestUpdateDatetime
 
