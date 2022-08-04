@@ -433,7 +433,7 @@ def landslideAlertInfo(jmaLLADetail, updateBool, args):
     alertLv = {"発表": [], "継続": [], "解除": []}
     for name in jmaLLADetail["Report"]["Body"]["Warning"]["Item"]:
         if name["Kind"]["Code"] in ["1", "3"]:
-            if endedBool == False and name["Kind"]["Code"] == "3":
+            if not endedBool and name["Kind"]["Code"] == "3":
                 endedBool = True
             cityCount = True
             alertLv[name["Kind"]["Status"]].append(name["Area"]["Name"])
@@ -482,7 +482,13 @@ def onceAlert(jmaDetail, outputDir, mkTextSettings, args):
     headTitle = jmaDetail["Report"]["Head"]["Title"]  # headerのタイトル
     headText = jmaDetail["Report"]["Head"]["Headline"]["Text"]  # headerのタイトル
     headDatetime = jmaDetail["Report"]["Head"]["ReportDateTime"]  # header datetime
-    contentText = jmaDetail["Report"]["Body"]["Comment"]["Text"]["#text"]  # 気象庁電文描画
+
+    print(jmaDetail)
+
+    if "Comment" in jmaDetail["Report"]["Body"]:
+        contentText = jmaDetail["Report"]["Body"]["Comment"]["Text"]["#text"]  # 気象庁電文描画
+    else:
+        contentText = jmaDetail["Report"]["Head"]["Headline"]["Text"]  # 気象庁電文描画
 
     print(infoType, headTitle, headDatetime, contentText, outputDir)
 

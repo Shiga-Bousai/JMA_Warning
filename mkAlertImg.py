@@ -1,17 +1,5 @@
-from datetime import datetime, timezone, timedelta
-
-import requests
-import xmltodict
 from PIL import Image, ImageDraw, ImageFont  # pip install pillow-simd
-import matplotlib.pyplot as plt
-import geopandas as gpd
-
-from os import remove
 from os.path import dirname, abspath, join
-import sys
-
-sys.path.append(abspath("../"))
-from pkg.twitter_python import tweet, uploadImage
 
 dirName = dirname(abspath(__file__))
 

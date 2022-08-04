@@ -1,5 +1,4 @@
 from warning import getWarning
-from os import remove
 from datetime import datetime, timezone, timedelta
 from os.path import dirname, abspath
 import sys
