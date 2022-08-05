@@ -111,24 +111,38 @@ def getWarning(lastUpdateTime, args):
                 weatherWarningData(jmaDetail, updateBool, args)
             elif listData["title"] == "土砂災害警戒情報":
                 jmaDetail = jmaAPI(listData["id"])
+                #print(jmaDetail["Report"]["Head"]["Headline"]["Text"])
                 onceAlert(
                     jmaDetail,
+                    jmaDetail["Report"]["Head"]["Headline"]["Text"],
                     f'{dirName}/wTextImg/{textTweetSettings[listData["title"]]["fileName"]}.jpeg',
                     textTweetSettings[listData["title"]]["textSetting"],
                     args,
                 )
             elif listData["title"] ==  "指定河川洪水予報":
                 jmaDetail = jmaAPI(listData["id"])
-                onceAlert(
-                    jmaDetail,
-                    f'{dirName}/wTextImg/{textTweetSettings[listData["title"]]["fileName"]}.jpeg',
-                    textTweetSettings[listData["title"]]["textSetting"],
-                    args,
-                )
+                if (len(jmaDetail["Report"]["Body"]["Warning"]["Item"]) > 1):
+                    onceAlert(
+                        jmaDetail,
+                        jmaDetail["Report"]["Body"]["Warning"]["Item"][0]["Kind"]["Property"]["Text"],
+                        f'{dirName}/wTextImg/{textTweetSettings[listData["title"]]["fileName"]}.jpeg',
+                        textTweetSettings[listData["title"]]["textSetting"],
+                        args,
+                    )
+                else:
+                    onceAlert(
+                        jmaDetail,
+                        jmaDetail["Report"]["Body"]["Warning"]["Item"]["Kind"]["Property"]["Text"],
+                        f'{dirName}/wTextImg/{textTweetSettings[listData["title"]]["fileName"]}.jpeg',
+                        textTweetSettings[listData["title"]]["textSetting"],
+                        args,
+                    )
             elif listData["title"] in ["府県気象情報"]:
                 jmaDetail = jmaAPI(listData["id"])
+                #print(jmaDetail["Report"]["Head"]["Headline"]["Text"])
                 onceAlert(
                     jmaDetail,
+                    jmaDetail["Report"]["Body"]["Comment"]["Text"]["#text"],
                     f'{dirName}/wTextImg/{textTweetSettings[listData["title"]]["fileName"]}.jpeg',
                     textTweetSettings[listData["title"]]["textSetting"],
                     args,
@@ -143,11 +157,12 @@ def getWarning(lastUpdateTime, args):
             jmaDetail = jmaAPI(listData["id"])
             onceAlert(
                 jmaDetail,
+                jmaDetail["Report"]["Body"]["Comment"]["Text"]["#text"],
                 f'{dirName}/wTextImg/{textTweetSettings[listData["title"]]["fileName"]}.jpeg',
                 textTweetSettings[listData["title"]]["textSetting"],
                 args,
             )
-            # print(listData["content"]["#text"])
+            #print(listData["content"]["#text"])
         elif (
             "大阪管区気象台" in listData["author"]["name"]
             and updateDatetime > lastUpdateTime
@@ -156,6 +171,7 @@ def getWarning(lastUpdateTime, args):
             jmaDetail = jmaAPI(listData["id"])
             onceAlert(
                 jmaDetail,
+                jmaDetail["Report"]["Body"]["Comment"]["Text"]["#text"],
                 f'{dirName}/wTextImg/{textTweetSettings["nomal"]["fileName"]}.jpeg',
                 textTweetSettings["nomal"]["textSetting"],
                 args,
@@ -318,7 +334,7 @@ def mkImage(cityWarningData):
             ((textW - 5, textH + 33, textW + 1080, textH + 35)), fill="#f1f1f1"
         )  # 下のバー描画
         textW = 720 + textWidth + 50
-        print(cityWarningData[cWD])
+        #print(cityWarningData[cWD])
         for wCode in cityWarningData[cWD]:
             if int(wCode) >= 32:
                 boxFillColor = "#7030a0"
@@ -507,24 +523,12 @@ https://shiga-bousai.jp/dmap/map/index?l=M_r_k_d_risk_map&f=0010011111101000000&
         remove(warningTextImage)
 
 
-def onceAlert(jmaDetail, outputDir, mkTextSettings, args):
+def onceAlert(jmaDetail, contentText, outputDir, mkTextSettings, args):
     # 更新さらた場合のみ
     infoType = jmaDetail["Report"]["Head"]["InfoType"]  # 情報提供タイプ
     headTitle = jmaDetail["Report"]["Head"]["Title"]  # headerのタイトル
     headText = jmaDetail["Report"]["Head"]["Headline"]["Text"]  # headerのタイトル
     headDatetime = jmaDetail["Report"]["Head"]["ReportDateTime"]  # header datetime
-
-    print(jmaDetail)
-
-    if "Comment" in jmaDetail["Report"]["Body"]:
-        contentText = jmaDetail["Report"]["Body"]["Comment"]["Text"]["#text"]  # 気象庁電文描画
-    elif "Warning" in jmaDetail["Report"]["Body"]:
-        if "Property" in  jmaDetail["Report"]["Body"]["Warning"]["Item"]["Kind"]:
-            contentText = jmaDetail["Report"]["Body"]["Warning"]["Item"]["Kind"]["Property"]["Text"]
-    else:
-        contentText = jmaDetail["Report"]["Head"]["Headline"]["Text"]  # 気象庁電文描画
-
-    print(infoType, headTitle, headDatetime, contentText, outputDir)
 
     mkAlertImg.textOnly(
         outpputFile=outputDir,
@@ -546,5 +550,5 @@ def onceAlert(jmaDetail, outputDir, mkTextSettings, args):
 
     id = uploadImage(outputDir)
 
-    if args == ["main.py"]:
+    if args == ["main.py"]
         tweet(tweetText, mediaIDs=[id])
