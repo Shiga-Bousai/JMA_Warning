@@ -550,5 +550,5 @@ def onceAlert(jmaDetail, contentText, outputDir, mkTextSettings, args):
 
     id = uploadImage(outputDir)
 
-    if args == ["main.py"]
+    if args == ["main.py"]:
         tweet(tweetText, mediaIDs=[id])
