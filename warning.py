@@ -78,6 +78,24 @@ textTweetSettings = {
             "headerTextColor": "#fcfefd",
         },
     },
+    "土砂災害警戒情報": {
+        "fileName": "landslide_disaster",
+        "textSetting": {
+            "mainBaseColor": "#121212",
+            "mainTextColor": "#fcfefd",
+            "headerBaseColor": "#952091",
+            "headerTextColor": "#fcfefd",
+        },
+    },
+    "指定河川洪水予報": {
+        "fileName": "flood_forecasting",
+        "textSetting": {
+            "mainBaseColor": "#121212",
+            "mainTextColor": "#fcfefd",
+            "headerBaseColor": "#952091",
+            "headerTextColor": "#fcfefd",
+        },
+    },
 }
 
 
@@ -93,7 +111,20 @@ def getWarning(lastUpdateTime, args):
                 weatherWarningData(jmaDetail, updateBool, args)
             elif listData["title"] == "土砂災害警戒情報":
                 jmaDetail = jmaAPI(listData["id"])
-                landslideAlertInfo(jmaDetail, updateBool, args)
+                onceAlert(
+                    jmaDetail,
+                    f'{dirName}/wTextImg/{textTweetSettings[listData["title"]]["fileName"]}.jpeg',
+                    textTweetSettings[listData["title"]]["textSetting"],
+                    args,
+                )
+            elif listData["title"] ==  "指定河川洪水予報":
+                jmaDetail = jmaAPI(listData["id"])
+                onceAlert(
+                    jmaDetail,
+                    f'{dirName}/wTextImg/{textTweetSettings[listData["title"]]["fileName"]}.jpeg',
+                    textTweetSettings[listData["title"]]["textSetting"],
+                    args,
+                )
             elif listData["title"] in ["府県気象情報"]:
                 jmaDetail = jmaAPI(listData["id"])
                 onceAlert(
@@ -487,6 +518,9 @@ def onceAlert(jmaDetail, outputDir, mkTextSettings, args):
 
     if "Comment" in jmaDetail["Report"]["Body"]:
         contentText = jmaDetail["Report"]["Body"]["Comment"]["Text"]["#text"]  # 気象庁電文描画
+    elif "Warning" in jmaDetail["Report"]["Body"]:
+        if "Property" in  jmaDetail["Report"]["Body"]["Warning"]["Item"]["Kind"]:
+            contentText = jmaDetail["Report"]["Body"]["Warning"]["Item"]["Kind"]["Property"]["Text"]
     else:
         contentText = jmaDetail["Report"]["Head"]["Headline"]["Text"]  # 気象庁電文描画
 
