@@ -167,7 +167,7 @@ def getWarning(lastUpdateTime, args):
             ):
                 onceAlert(
                     jmaDetail,
-                    jmaDetail["Report"]["Headline"]["Text"],
+                    jmaDetail["Report"]["Head"]["Headline"]["Text"],
                     f'{dirName}/wTextImg/{textTweetSettings[listData["title"]]["fileName"]}.jpeg',
                     textTweetSettings[listData["title"]]["textSetting"],
                     args,
