@@ -150,19 +150,28 @@ def getWarning(lastUpdateTime, args):
         elif (
             "気象庁" in listData["author"]["name"]
             and updateDatetime > lastUpdateTime
-            and re.findall(
-                "【滋賀県記録的短時間大雨情報】|【滋賀県熱中症警戒アラート】", listData["content"]["#text"]
-            )
         ):
             jmaDetail = jmaAPI(listData["id"])
-            onceAlert(
-                jmaDetail,
-                jmaDetail["Report"]["Body"]["Comment"]["Text"]["#text"],
-                f'{dirName}/wTextImg/{textTweetSettings[listData["title"]]["fileName"]}.jpeg',
-                textTweetSettings[listData["title"]]["textSetting"],
-                args,
-            )
-            #print(listData["content"]["#text"])
+            if re.findall(
+                "【滋賀県熱中症警戒アラート】", listData["content"]["#text"]
+            ):
+                onceAlert(
+                    jmaDetail,
+                    jmaDetail["Report"]["Body"]["Comment"]["Text"]["#text"],
+                    f'{dirName}/wTextImg/{textTweetSettings[listData["title"]]["fileName"]}.jpeg',
+                    textTweetSettings[listData["title"]]["textSetting"],
+                    args,
+                )
+            elif re.findall(
+                "【滋賀県記録的短時間大雨情報】|【滋賀県土砂災害警戒情報】", listData["content"]["#text"]
+            ):
+                onceAlert(
+                    jmaDetail,
+                    jmaDetail["Report"]["Body"]["Comment"]["Text"],
+                    f'{dirName}/wTextImg/{textTweetSettings[listData["title"]]["fileName"]}.jpeg',
+                    textTweetSettings[listData["title"]]["textSetting"],
+                    args,
+                )
         elif (
             "大阪管区気象台" in listData["author"]["name"]
             and updateDatetime > lastUpdateTime
