@@ -163,11 +163,21 @@ def getWarning(lastUpdateTime, args):
                     args,
                 )
             elif re.findall(
-                "【滋賀県記録的短時間大雨情報】|【滋賀県土砂災害警戒情報】", listData["content"]["#text"]
+                "【滋賀県記録的短時間大雨情報】", listData["content"]["#text"]
             ):
                 onceAlert(
                     jmaDetail,
-                    jmaDetail["Report"]["Body"]["Comment"]["Text"],
+                    jmaDetail["Report"]["Headline"]["Text"],
+                    f'{dirName}/wTextImg/{textTweetSettings[listData["title"]]["fileName"]}.jpeg',
+                    textTweetSettings[listData["title"]]["textSetting"],
+                    args,
+                )
+            elif re.findall(
+                "【滋賀県土砂災害警戒情報】", listData["content"]["#text"]
+            ):
+                onceAlert(
+                    jmaDetail,
+                    jmaDetail["Report"]["Head"]["Headline"]["Text"],
                     f'{dirName}/wTextImg/{textTweetSettings[listData["title"]]["fileName"]}.jpeg',
                     textTweetSettings[listData["title"]]["textSetting"],
                     args,
